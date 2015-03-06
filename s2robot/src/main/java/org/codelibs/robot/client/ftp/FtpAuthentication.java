@@ -23,11 +23,11 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @author shinsuke
- * 
+ *
  */
 public class FtpAuthentication {
     private static final Logger logger = LoggerFactory
-        .getLogger(FtpAuthentication.class);
+            .getLogger(FtpAuthentication.class);
 
     private String server;
 
@@ -69,14 +69,14 @@ public class FtpAuthentication {
         this.password = password;
     }
 
-    boolean matches(String path) {
+    boolean matches(final String path) {
         if (StringUtil.isBlank(path)) {
             return false;
         }
 
         try {
-            int pos = path.indexOf('/', 6);
-            URL uri = new URL(pos == -1 ? path : path.substring(0, pos));
+            final int pos = path.indexOf('/', 6);
+            final URL uri = new URL(pos == -1 ? path : path.substring(0, pos));
             if (!"ftp".equals(uri.getProtocol())) {
                 return false;
             }
@@ -91,7 +91,7 @@ public class FtpAuthentication {
                 return false;
             }
             return true;
-        } catch (Exception e) {
+        } catch (final Exception e) {
             logger.debug("Invalid URI: " + path, e);
         }
         return false;

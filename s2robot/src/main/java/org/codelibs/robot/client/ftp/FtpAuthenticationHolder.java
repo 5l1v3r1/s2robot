@@ -20,7 +20,7 @@ import java.util.List;
 
 /**
  * @author shinsuke
- * 
+ *
  */
 public class FtpAuthenticationHolder {
     List<FtpAuthentication> authList = new ArrayList<>();
@@ -34,7 +34,7 @@ public class FtpAuthenticationHolder {
             return null;
         }
 
-        for (FtpAuthentication auth : authList) {
+        for (final FtpAuthentication auth : authList) {
             if (auth.matches(path)) {
                 return auth;
             }

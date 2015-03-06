@@ -78,6 +78,33 @@ public class FtpClient extends AbstractS2RobotClient {
 
     private FTPClientConfig ftpClientConfig;
 
+    private final Queue<FTPClient> ftpClientQueue =
+        new ConcurrentLinkedQueue<>();
+
+    private String activeExternalHost;
+
+    private int activeMinPort;
+
+    private int activeMaxPort;
+
+    private boolean autodetectEncoding;
+
+    private int connectTimeout;
+
+    private int dataTimeout;
+
+    private String controlEncoding;
+
+    private int bufferSize;
+
+    private String passiveLocalHost;
+
+    private boolean passiveNatWorkaround;
+
+    private String reportActiveExternalHost;
+
+    private boolean useEPSVwithIPv4;
+
     public synchronized void init() {
         if (ftpAuthenticationHolder != null) {
             return;
@@ -97,26 +124,53 @@ public class FtpClient extends AbstractS2RobotClient {
             ftpAuthenticationHolder = holder;
         }
 
-        String systemKey =
+        final String systemKey =
             getInitParameter("ftpConfigSystemKey", FTPClientConfig.SYST_UNIX);
         ftpClientConfig = new FTPClientConfig(systemKey);
-        String serverLanguageCode =
+
+        final String serverLanguageCode =
             getInitParameter("ftpConfigServerLanguageCode", "en");
         ftpClientConfig.setServerLanguageCode(serverLanguageCode);
-        String serverTimeZoneId =
+
+        final String serverTimeZoneId =
             getInitParameter("ftpConfigServerTimeZoneId", null);
         if (serverTimeZoneId != null) {
             ftpClientConfig.setServerTimeZoneId(serverTimeZoneId);
         }
+
+        activeExternalHost = getInitParameter("activeExternalHost", null);
+
+        activeMinPort = getInitParameter("activeMinPort", -1);
+
+        activeMaxPort = getInitParameter("activeMaxPort", -1);
+
+        autodetectEncoding = getInitParameter("autodetectEncoding", true);
+
+        connectTimeout = getInitParameter("connectTimeout", 0);
+
+        dataTimeout = getInitParameter("dataTimeout", -1);
+
+        controlEncoding = getInitParameter("controlEncoding", Constants.UTF_8);
+
+        bufferSize = getInitParameter("bufferSize", 0);
+
+        passiveLocalHost = getInitParameter("passiveLocalHost", null);
+
+        passiveNatWorkaround = getInitParameter("passiveNatWorkaround", true);
+
+        reportActiveExternalHost =
+            getInitParameter("reportActiveExternalHost", null);
+
+        useEPSVwithIPv4 = getInitParameter("useEPSVwithIPv4", false);
     }
 
     @DestroyMethod
     public void destroy() {
         ftpAuthenticationHolder = null;
-        for (FTPClient ftpClient : ftpClientQueue) {
+        for (final FTPClient ftpClient : ftpClientQueue) {
             try {
                 ftpClient.disconnect();
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 logger.debug("Failed to disconnect FTPClient.", e);
             }
         }
@@ -124,7 +178,7 @@ public class FtpClient extends AbstractS2RobotClient {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.codelibs.robot.client.S2RobotClient#doGet(java.lang.String)
      */
     @Override
@@ -141,7 +195,7 @@ public class FtpClient extends AbstractS2RobotClient {
         final ResponseData responseData = new ResponseData();
         responseData.setMethod(Constants.GET_METHOD);
 
-        FtpInfo ftpInfo = new FtpInfo(uri);
+        final FtpInfo ftpInfo = new FtpInfo(uri);
         responseData.setUrl(ftpInfo.toUrl());
 
         FTPClient client = null;
@@ -157,7 +211,7 @@ public class FtpClient extends AbstractS2RobotClient {
                 final Set<RequestData> requestDataSet = new HashSet<>();
                 if (includeContent) {
                     try {
-                        FTPFile[] files =
+                        final FTPFile[] files =
                             client.listFiles(
                                 ftpInfo.getParent(),
                                 FTPFileFilters.NON_NULL);
@@ -170,7 +224,7 @@ public class FtpClient extends AbstractS2RobotClient {
                                 .url(chileUri)
                                 .build());
                         }
-                    } catch (IOException e) {
+                    } catch (final IOException e) {
                         throw new RobotCrawlAccessException("Could not access "
                             + uri, e);
                     }
@@ -179,9 +233,10 @@ public class FtpClient extends AbstractS2RobotClient {
                 throw new ChildUrlsException(requestDataSet);
             }
 
-            FTPFile[] files = client.listFiles(null, FTPFileFilters.NON_NULL);
+            final FTPFile[] files =
+                client.listFiles(null, FTPFileFilters.NON_NULL);
             validateRequest(client);
-            for (FTPFile f : files) {
+            for (final FTPFile f : files) {
                 if (ftpInfo.getName().equals(f.getName())) {
                     file = f;
                     break;
@@ -265,7 +320,7 @@ public class FtpClient extends AbstractS2RobotClient {
                 final Set<RequestData> requestDataSet = new HashSet<>();
                 if (includeContent) {
                     try {
-                        FTPFile[] ftpFiles =
+                        final FTPFile[] ftpFiles =
                             client.listFiles(
                                 ftpInfo.getName(),
                                 FTPFileFilters.NON_NULL);
@@ -278,7 +333,7 @@ public class FtpClient extends AbstractS2RobotClient {
                                 .url(chileUri)
                                 .build());
                         }
-                    } catch (IOException e) {
+                    } catch (final IOException e) {
                         throw new RobotCrawlAccessException("Could not access "
                             + uri, e);
                     }
@@ -303,8 +358,8 @@ public class FtpClient extends AbstractS2RobotClient {
     /**
      * @param client
      */
-    private void validateRequest(FTPClient client) {
-        int replyCode = client.getReplyCode();
+    private void validateRequest(final FTPClient client) {
+        final int replyCode = client.getReplyCode();
         if (replyCode >= 200 && replyCode < 300) {
             return;
         }
@@ -326,7 +381,7 @@ public class FtpClient extends AbstractS2RobotClient {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.codelibs.robot.client.S2RobotClient#doHead(java.lang.String)
      */
     @Override
@@ -340,9 +395,7 @@ public class FtpClient extends AbstractS2RobotClient {
         }
     }
 
-    Queue<FTPClient> ftpClientQueue = new ConcurrentLinkedQueue<>();
-
-    protected FTPClient getClient(FtpInfo info) throws IOException {
+    protected FTPClient getClient(final FtpInfo info) throws IOException {
         FTPClient ftpClient = ftpClientQueue.poll();
         if (ftpClient != null) {
             if (ftpClient.isAvailable()) {
@@ -350,19 +403,42 @@ public class FtpClient extends AbstractS2RobotClient {
             }
             try {
                 ftpClient.disconnect();
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 logger.debug("Failed to disconnect " + info.toUrl(), e);
             }
         }
 
         try {
             ftpClient = new FTPClient();
+
+            if (activeExternalHost != null) {
+                ftpClient.setActiveExternalIPAddress(activeExternalHost);
+            }
+            if (passiveLocalHost != null) {
+                ftpClient.setPassiveLocalIPAddress(passiveLocalHost);
+            }
+            if (reportActiveExternalHost != null) {
+                ftpClient
+                    .setReportActiveExternalIPAddress(reportActiveExternalHost);
+            }
+            if (activeMinPort != -1 && activeMaxPort != -1) {
+                ftpClient.setActivePortRange(activeMinPort, activeMaxPort);
+            }
+            ftpClient.setAutodetectUTF8(autodetectEncoding);
+            ftpClient.setConnectTimeout(connectTimeout);
+            ftpClient.setDataTimeout(dataTimeout);
+            ftpClient.setControlEncoding(controlEncoding);
+            ftpClient.setBufferSize(bufferSize);
+            ftpClient.setPassiveNatWorkaround(passiveNatWorkaround);
+            ftpClient.setUseEPSVwithIPv4(useEPSVwithIPv4);
+
             ftpClient.configure(ftpClientConfig);
 
             ftpClient.connect(info.getHost(), info.getPort());
             validateRequest(ftpClient);
 
-            FtpAuthentication auth = ftpAuthenticationHolder.get(info.toUrl());
+            final FtpAuthentication auth =
+                ftpAuthenticationHolder.get(info.toUrl());
             if (auth != null) {
                 if (!ftpClient.login(auth.getUsername(), auth.getPassword())) {
                     throw new RobotLoginFailureException("Login Failure: "
@@ -372,11 +448,11 @@ public class FtpClient extends AbstractS2RobotClient {
 
             ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
             return ftpClient;
-        } catch (IOException e) {
+        } catch (final IOException e) {
             if (ftpClient != null) {
                 try {
                     ftpClient.disconnect();
-                } catch (Exception e1) {
+                } catch (final Exception e1) {
                     logger.debug("Failed to disconnect " + info.toUrl(), e);
                 }
             }
@@ -394,19 +470,19 @@ public class FtpClient extends AbstractS2RobotClient {
 
         private String name;
 
-        public FtpInfo(String s) {
+        public FtpInfo(final String s) {
             try {
                 uri = new URL(s);
-            } catch (MalformedURLException e) {
+            } catch (final MalformedURLException e) {
                 throw new RobotCrawlAccessException("Invalid URL: " + s, e);
             }
 
-            String path = uri.getPath();
+            final String path = uri.getPath();
             if (path == null) {
                 parent = "/";
                 name = null;
             } else {
-                String[] values =
+                final String[] values =
                     path
                         .replaceAll("/+", "/")
                         .replaceFirst("/$", "")
@@ -442,10 +518,10 @@ public class FtpClient extends AbstractS2RobotClient {
         }
 
         public String toUrl() {
-            StringBuilder buf = new StringBuilder(100);
+            final StringBuilder buf = new StringBuilder(100);
             buf.append("ftp://");
             buf.append(getHost());
-            int port = getPort();
+            final int port = getPort();
             if (port != DEFAULT_FTP_PORT) {
                 buf.append(':').append(port);
             }
@@ -456,8 +532,8 @@ public class FtpClient extends AbstractS2RobotClient {
             return buf.toString().replaceAll("/+$", "");
         }
 
-        public String toUrl(String child) {
-            String url = toUrl();
+        public String toUrl(final String child) {
+            final String url = toUrl();
             if (url.endsWith("/")) {
                 return toUrl() + child;
             }
@@ -471,5 +547,102 @@ public class FtpClient extends AbstractS2RobotClient {
         public String getName() {
             return name;
         }
+    }
+
+    public String getActiveExternalHost() {
+        return activeExternalHost;
+    }
+
+    public void setActiveExternalHost(final String activeExternalHost) {
+        this.activeExternalHost = activeExternalHost;
+    }
+
+    public int getActiveMinPort() {
+        return activeMinPort;
+    }
+
+    public void setActiveMinPort(final int activeMinPort) {
+        this.activeMinPort = activeMinPort;
+    }
+
+    public int getActiveMaxPort() {
+        return activeMaxPort;
+    }
+
+    public void setActiveMaxPort(final int activeMaxPort) {
+        this.activeMaxPort = activeMaxPort;
+    }
+
+    public boolean isAutodetectEncoding() {
+        return autodetectEncoding;
+    }
+
+    public void setAutodetectEncoding(final boolean autodetectEncoding) {
+        this.autodetectEncoding = autodetectEncoding;
+    }
+
+    public int getConnectTimeout() {
+        return connectTimeout;
+    }
+
+    public void setConnectTimeout(final int connectTimeout) {
+        this.connectTimeout = connectTimeout;
+    }
+
+    public int getDataTimeout() {
+        return dataTimeout;
+    }
+
+    public void setDataTimeout(final int dataTimeout) {
+        this.dataTimeout = dataTimeout;
+    }
+
+    public String getControlEncoding() {
+        return controlEncoding;
+    }
+
+    public void setControlEncoding(final String controlEncoding) {
+        this.controlEncoding = controlEncoding;
+    }
+
+    public int getBufferSize() {
+        return bufferSize;
+    }
+
+    public void setBufferSize(final int bufferSize) {
+        this.bufferSize = bufferSize;
+    }
+
+    public String getPassiveLocalHost() {
+        return passiveLocalHost;
+    }
+
+    public void setPassiveLocalHost(final String passiveLocalHost) {
+        this.passiveLocalHost = passiveLocalHost;
+    }
+
+    public boolean isPassiveNatWorkaround() {
+        return passiveNatWorkaround;
+    }
+
+    public void setPassiveNatWorkaround(final boolean passiveNatWorkaround) {
+        this.passiveNatWorkaround = passiveNatWorkaround;
+    }
+
+    public String getReportActiveExternalHost() {
+        return reportActiveExternalHost;
+    }
+
+    public void setReportActiveExternalHost(
+            final String reportActiveExternalHost) {
+        this.reportActiveExternalHost = reportActiveExternalHost;
+    }
+
+    public boolean isUseEPSVwithIPv4() {
+        return useEPSVwithIPv4;
+    }
+
+    public void setUseEPSVwithIPv4(final boolean useEPSVwithIPv4) {
+        this.useEPSVwithIPv4 = useEPSVwithIPv4;
     }
 }
