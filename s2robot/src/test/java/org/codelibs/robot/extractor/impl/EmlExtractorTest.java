@@ -48,7 +48,16 @@ public class EmlExtractorTest extends S2TestCase {
         IOUtils.closeQuietly(in);
         logger.info(content);
         assertTrue(content.contains("プレイステーション"));
-        //        assertTrue(data.getValues("Subject")[0].contains(""));
+        assertTrue(data.getValues("Subject")[0].contains("ダイジェスト"));
+    }
+
+    public void test_getDecodeText() throws Exception {
+        assertEquals("", emlExtractor.getDecodeText(null));
+        assertEquals("", emlExtractor.getDecodeText(""));
+        assertEquals("abc123", emlExtractor.getDecodeText("abc123"));
+        assertEquals(
+            "テスト",
+            emlExtractor.getDecodeText("=?UTF-8?B?44OG44K544OI?="));
     }
 
     public void test_getText_null() {

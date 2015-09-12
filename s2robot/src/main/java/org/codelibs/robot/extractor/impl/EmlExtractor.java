@@ -202,12 +202,11 @@ public class EmlExtractor implements Extractor {
         }
     }
 
-    private String getDecodeText(String value) {
+    String getDecodeText(String value) {
         if (value == null) {
             return Constants.EMPTY_STRING;
         }
         try {
-            // TODO
             return MimeUtility.decodeText(value);
         } catch (UnsupportedEncodingException e) {
             logger.warn("Invalid encoding.", e);
