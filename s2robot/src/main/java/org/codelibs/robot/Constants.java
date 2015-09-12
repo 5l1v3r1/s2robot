@@ -52,6 +52,9 @@ public final class Constants {
 
     public static final String EMPTY_STRING = "";
 
+    public static final String ISO_DATETIME_FORMAT =
+        "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
+
     private Constants() {
     }
 

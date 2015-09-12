@@ -37,7 +37,8 @@ public class MimeTypeHelperImplTest extends S2TestCase {
     public void test_getContentType() {
         final MimeTypeHelper mimeTypeHelper =
             SingletonS2Container.getComponent(MimeTypeHelperImpl.class);
-        final InputStream is = ResourceUtil.getResourceAsStream("test/text1.txt");
+        final InputStream is =
+            ResourceUtil.getResourceAsStream("test/text1.txt");
         final InputStream htmlStream =
             ResourceUtil.getResourceAsStream("html/test1.html");
         final InputStream shtmlStream =
@@ -64,6 +65,8 @@ public class MimeTypeHelperImplTest extends S2TestCase {
             ResourceUtil.getResourceAsStream("extractor/test.pdf");
         final InputStream freeMindStream =
             ResourceUtil.getResourceAsStream("extractor/test.mm");
+        final InputStream emlStream =
+            ResourceUtil.getResourceAsStream("extractor/eml/sample1.eml");
 
         assertEquals(
             "text/plain",
@@ -133,12 +136,17 @@ public class MimeTypeHelperImplTest extends S2TestCase {
         assertEquals(
             "application/zip",
             mimeTypeHelper.getContentType(zipStream, "hoge.zip"));
-        assertEquals("application/x-lharc", // TODO is it correct?
+        assertEquals(
+            "application/x-lharc", // TODO is it correct?
             mimeTypeHelper.getContentType(lhaStream, "hoge.lzh"));
 
         assertEquals(
             "application/xml",
             mimeTypeHelper.getContentType(freeMindStream, "hoge.mm"));
+
+        assertEquals(
+            "message/rfc822",
+            mimeTypeHelper.getContentType(emlStream, "sample1.eml"));
 
         assertEquals(
             "application/octet-stream",
@@ -149,7 +157,8 @@ public class MimeTypeHelperImplTest extends S2TestCase {
     public void test_getContentType_null() {
         final MimeTypeHelper mimeTypeHelper =
             SingletonS2Container.getComponent(MimeTypeHelperImpl.class);
-        final InputStream is = ResourceUtil.getResourceAsStream("test/text1.txt");
+        final InputStream is =
+            ResourceUtil.getResourceAsStream("test/text1.txt");
 
         try {
             mimeTypeHelper.getContentType(null, "");

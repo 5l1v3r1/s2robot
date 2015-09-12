@@ -24,6 +24,7 @@
 			<arg>"false"</arg>
 		</initMethod>
 	</component>
+	<component name="emlExtractor" class="org.codelibs.robot.extractor.impl.EmlExtractor"/>
 	<!-- 
 	<component name="officeManagerConfiguration"
 		class="org.artofsolving.jodconverter.office.DefaultOfficeManagerConfiguration">
@@ -66,6 +67,12 @@
 "application/x-lharc"
 			}</arg>
 			<arg>lhaExtractor</arg>
+		</initMethod>
+		<initMethod name="addExtractor">
+			<arg>{
+"message/rfc822"
+			}</arg>
+			<arg>emlExtractor</arg>
 		</initMethod>
 		<initMethod name="addExtractor">
 			<arg>{
@@ -1261,7 +1268,6 @@
 "message/imdn+xml",
 "message/news",
 "message/partial",
-"message/rfc822",
 "message/s-http",
 "message/sip",
 "message/sipfrag",

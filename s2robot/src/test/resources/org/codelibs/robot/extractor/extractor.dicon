@@ -30,6 +30,7 @@
 			<arg>"false"</arg>
 		</initMethod>
 	</component>
+	<component name="emlExtractor" class="org.codelibs.robot.extractor.impl.EmlExtractor"/>
 
 	<component name="extractorFactory" class="org.codelibs.robot.extractor.ExtractorFactory">
 		<initMethod name="addExtractor">
@@ -91,6 +92,10 @@
 		<initMethod name="addExtractor">
 			<arg>"application/xml"</arg>
 			<arg>xmlExtractor</arg>
+		</initMethod>
+		<initMethod name="addExtractor">
+			<arg>"message/rfc822"</arg>
+			<arg>emlExtractor</arg>
 		</initMethod>
 	</component>
 
