@@ -51,6 +51,16 @@ public class EmlExtractorTest extends S2TestCase {
         assertTrue(data.getValues("Subject")[0].contains("ダイジェスト"));
     }
 
+    public void test_getReceivedDate() {
+        final InputStream in =
+            ResourceUtil.getResourceAsStream("extractor/eml/sample1.eml");
+        ExtractData data = emlExtractor.getText(in, null);
+        IOUtils.closeQuietly(in);
+        final String[] receivedDate = data.getValues("Received-Date");
+        logger.info("Received-Date: " + receivedDate[0]);
+        assertEquals(receivedDate[0], "2012-11-11T11:39:59.000Z");
+    }
+
     public void test_getDecodeText() throws Exception {
         assertEquals("", emlExtractor.getDecodeText(null));
         assertEquals("", emlExtractor.getDecodeText(""));

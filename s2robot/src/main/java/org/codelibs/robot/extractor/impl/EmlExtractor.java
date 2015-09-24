@@ -18,6 +18,7 @@ package org.codelibs.robot.extractor.impl;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Enumeration;
@@ -26,8 +27,10 @@ import java.util.Properties;
 
 import javax.mail.Address;
 import javax.mail.Header;
+import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.Session;
+import javax.mail.internet.MailDateFormat;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeUtility;
 
@@ -132,7 +135,7 @@ public class EmlExtractor implements Extractor {
                 //ignore
             }
             try {
-                putValue(data, "Received-Date", message.getReceivedDate());
+                putValue(data, "Received-Date", getReceivedDate(message));
             } catch (Exception e) {
                 //ignore
             }
@@ -158,6 +161,35 @@ public class EmlExtractor implements Extractor {
             }
             try {
                 putValue(data, "Subject", message.getSubject());
+            } catch (Exception e) {
+                //ignore
+            }
+            try {
+                putValue(data, "Receipients", message.getAllRecipients());
+            } catch (Exception e) {
+                //ignore
+            }
+            try {
+                putValue(
+                    data,
+                    "To",
+                    message.getRecipients(Message.RecipientType.TO));
+            } catch (Exception e) {
+                //ignore
+            }
+            try {
+                putValue(
+                    data,
+                    "Cc",
+                    message.getRecipients(Message.RecipientType.CC));
+            } catch (Exception e) {
+                //ignore
+            }
+            try {
+                putValue(
+                    data,
+                    "Bcc",
+                    message.getRecipients(Message.RecipientType.BCC));
             } catch (Exception e) {
                 //ignore
             }
@@ -222,4 +254,40 @@ public class EmlExtractor implements Extractor {
         this.mailProperties = mailProperties;
     }
 
+    private static Date getReceivedDate(javax.mail.Message message)
+            throws MessagingException {
+        Date today = new Date();
+        logger.info("message=" + message);
+        final String[] received = message.getHeader("received");
+        if (received != null) {
+            for (final String v : received) {
+                logger.info("received[]: " + v);
+                String dateStr = null;
+                try {
+                    dateStr = getDateString(v);
+                    logger.info("dateStr=" + dateStr);
+                    final Date receivedDate =
+                        new MailDateFormat().parse(dateStr);
+                    if (!receivedDate.after(today)) {
+                        return receivedDate;
+                    }
+                } catch (ParseException e) {
+                    // ignore
+                }
+            }
+        }
+        return null;
+    }
+
+    private static String getDateString(String text) {
+        String[] dayOfWeek =
+            { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
+        for (final String dow : dayOfWeek) {
+            final int i = text.lastIndexOf(dow);
+            if (i != -1) {
+                return text.substring(i);
+            }
+        }
+        return null;
+    }
 }
