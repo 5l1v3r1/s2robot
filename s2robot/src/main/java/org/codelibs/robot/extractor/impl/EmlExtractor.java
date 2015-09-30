@@ -257,15 +257,12 @@ public class EmlExtractor implements Extractor {
     private static Date getReceivedDate(javax.mail.Message message)
             throws MessagingException {
         Date today = new Date();
-        logger.info("message=" + message);
         final String[] received = message.getHeader("received");
         if (received != null) {
             for (final String v : received) {
-                logger.info("received[]: " + v);
                 String dateStr = null;
                 try {
                     dateStr = getDateString(v);
-                    logger.info("dateStr=" + dateStr);
                     final Date receivedDate =
                         new MailDateFormat().parse(dateStr);
                     if (!receivedDate.after(today)) {
