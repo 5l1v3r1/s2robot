@@ -51,6 +51,17 @@ public class EmlExtractorTest extends S2TestCase {
         assertTrue(data.getValues("Subject")[0].contains("ダイジェスト"));
     }
 
+    public void test_getMultipartText() {
+        final InputStream in =
+            ResourceUtil.getResourceAsStream("extractor/eml/sample2.eml");
+        ExtractData data = emlExtractor.getText(in, null);
+        final String content = data.getContent();
+        IOUtils.closeQuietly(in);
+        logger.info(content);
+        assertTrue(content.contains("チンギス・ハン"));
+        assertTrue(data.getValues("Subject")[0].contains("気象情報"));
+    }
+
     public void test_getReceivedDate() {
         final InputStream in =
             ResourceUtil.getResourceAsStream("extractor/eml/sample1.eml");

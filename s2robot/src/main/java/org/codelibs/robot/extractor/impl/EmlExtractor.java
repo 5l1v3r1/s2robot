@@ -26,9 +26,11 @@ import java.util.Map;
 import java.util.Properties;
 
 import javax.mail.Address;
+import javax.mail.BodyPart;
 import javax.mail.Header;
 import javax.mail.Message;
 import javax.mail.MessagingException;
+import javax.mail.Multipart;
 import javax.mail.Session;
 import javax.mail.internet.MailDateFormat;
 import javax.mail.internet.MimeMessage;
@@ -48,8 +50,8 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class EmlExtractor implements Extractor {
-    private static final Logger logger =
-        LoggerFactory.getLogger(EmlExtractor.class);
+    private static final Logger logger = LoggerFactory
+        .getLogger(EmlExtractor.class);
 
     protected Properties mailProperties = new Properties();
 
@@ -67,9 +69,11 @@ public class EmlExtractor implements Extractor {
         try {
             Session mailSession = Session.getDefaultInstance(props, null);
             MimeMessage message = new MimeMessage(mailSession, in);
-            Object content = message.getContent();
-            ExtractData data = new ExtractData(
-                content != null ? content.toString() : Constants.EMPTY_STRING);
+            //            Object content = message.getContent();
+            String content = getBodyText(message);
+            ExtractData data =
+                new ExtractData(content != null ? content.toString()
+                    : Constants.EMPTY_STRING);
             @SuppressWarnings("unchecked")
             Enumeration<Header> headers = message.getAllHeaders();
             while (headers.hasMoreElements()) {
@@ -194,7 +198,7 @@ public class EmlExtractor implements Extractor {
                 //ignore
             }
             return data;
-        } catch (MessagingException | IOException e) {
+        } catch (MessagingException e) {
             throw new ExtractException(e);
 
         }
@@ -225,10 +229,8 @@ public class EmlExtractor implements Extractor {
             }
             data.putValues(key, values);
         } else if (value instanceof Date) {
-            data.putValue(
-                key,
-                new SimpleDateFormat(Constants.ISO_DATETIME_FORMAT)
-                    .format(value));
+            data.putValue(key, new SimpleDateFormat(
+                Constants.ISO_DATETIME_FORMAT).format(value));
         } else if (value != null) {
             data.putValue(key, value.toString());
         }
@@ -252,6 +254,44 @@ public class EmlExtractor implements Extractor {
 
     public void setMailProperties(Properties mailProperties) {
         this.mailProperties = mailProperties;
+    }
+
+    private String getBodyText(MimeMessage message) {
+        String result = null;
+        try {
+            Object content = message.getContent();
+            if (content instanceof Multipart) {
+                BodyPart textPlain = null;
+                BodyPart textHtml = null;
+                Multipart multipart = (Multipart) content;
+                int count = multipart.getCount();
+                for (int i = 0; i < count; i++) {
+                    BodyPart bodyPart = multipart.getBodyPart(i);
+                    String disposition = bodyPart.getDisposition();
+                    if (disposition != null
+                        && (disposition.equalsIgnoreCase("ATTACHMENT"))) {
+                        // TODO: ignore attachments
+                    } else {
+                        if (bodyPart.isMimeType("text/plain")) {
+                            textPlain = bodyPart;
+                            break;
+                        } else if (bodyPart.isMimeType("text/html")) {
+                            textHtml = bodyPart;
+                        }
+                    }
+                }
+                if (textPlain != null) {
+                    result = (String) textPlain.getContent();
+                } else if (textHtml != null) {
+                    result = (String) textHtml.getContent();
+                }
+            } else if (content instanceof String) {
+                result = (String) content;
+            }
+        } catch (MessagingException | IOException e) {
+            throw new ExtractException(e);
+        }
+        return result;
     }
 
     private static Date getReceivedDate(javax.mail.Message message)
